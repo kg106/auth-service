@@ -13,28 +13,30 @@ Authentication is handled **exclusively** by the Auth Service.
 1. The user submits their credentials (e.g., email and password) to the Auth Service.
 2. The Auth Service queries its database to verify the credentials.
 3. Upon success, it generates a JWT containing the user's identity and state.
-4. Downstream services never perform authentication; they simply accept the signed token as absolute proof of identity.
+4. Downstream services never perform authentication; they simply accept the signed token as proof of identity.
 
 ### Authorization ("What can you do?")
-Authorization is handled at two levels: **The Edge (API Gateway)** and **The Node (Downstream Service)**.
-1. **Coarse-Grained Authorization (Gateway):** The API Gateway inspects the token's `status` claim. If the status is `BANNED` or `SUSPENDED`, the Gateway blocks the request at the edge, protecting the internal network from malicious traffic.
-2. **Fine-Grained Authorization (Downstream):** The downstream service (e.g., Wallet) reads the `roles` and `userId` claims. It uses the `userId` to scope data (e.g., "fetch wallet where user_id = X") and checks the `roles` to ensure the user has permission to perform specific actions (e.g., "only ADMIN can refund a transaction").
+Authorization is handled at multiple levels to ensure **Defense-in-Depth**.
+1. **Coarse-Grained Authorization (Gateway):** The API Gateway inspects the token's `status` claim. If the status is `BANNED` or `SUSPENDED`, the Gateway blocks the request at the edge.
+2. **Fine-Grained Authorization (Downstream):** The downstream service (e.g., Wallet) reads the `roles` and `userId` claims. It uses the `userId` to scope data and checks `roles` for specific action permissions.
 
 ---
 
-## 2. Trust via Cryptography (Sign & Verify)
+## 2. Trust via Cryptography (Defense-in-Depth)
 
-We do not use a database to validate tokens. Instead, we use **Asymmetric Cryptography (RSA)**.
+> [!WARNING]
+> **Never rely solely on HTTP Headers (e.g., X-User-Id) forwarded by the Gateway.** 
+> If a service is accidentally exposed or the internal network is compromised, headers can be faked. We implement **Defense-in-Depth** by validating the JWT at both the Edge and the Service level.
 
 ### Who Signs the Key? (The Private Key)
-The **Auth Service** is the only entity that holds the **Private Key**. 
-When a user logs in successfully, the Auth Service constructs the JWT payload and signs it using this Private Key (using the `RS256` algorithm). The signature guarantees that the token was minted by the Auth Service and hasn't been tampered with.
+The **Auth Service** holds the **Private Key** and signs the JWT using the `RS256` algorithm.
 
 ### Who Verifies the Key? (The Public Key)
-The **API Gateway** (and optionally, downstream services) hold the corresponding **Public Key**. 
-When a request arrives, the Gateway uses the Public Key to mathematically verify the signature on the JWT. 
-*   **Decentralized Verification:** The Gateway does not need to ping the Auth Service to ask "Is this token valid?". It knows purely through math.
-*   **Key Distribution:** The Auth Service exposes its public key via a `.well-known/jwks.json` endpoint so the Gateway can automatically download and cache it.
+Both the **Gateway** and **Downstream Services** use the **Public Key** to verify the signature.
+
+#### Recommended Security Models:
+*   **Option A (Balanced):** Gateway performs full validation (signature + expiration + status). Downstream services also validate the signature to ensure the token was issued by our Auth Service, preventing header injection attacks.
+*   **Option B (High Security):** Every microservice acts as a full **OAuth2 Resource Server**, validating the JWT independently. This is the preferred model for enterprise-grade security.
 
 ---
 
@@ -43,7 +45,6 @@ When a request arrives, the Gateway uses the Public Key to mathematically verify
 A JSON Web Token consists of three parts: `Header.Payload.Signature`.
 
 ### 1. Header
-Specifies the algorithm and the Key ID (used for key rotation).
 ```json
 {
   "alg": "RS256",
@@ -53,7 +54,6 @@ Specifies the algorithm and the Key ID (used for key rotation).
 ```
 
 ### 2. Payload (Custom Claims)
-Contains the user's identity and organizational context.
 ```json
 {
   "sub": "user@example.com",
@@ -66,57 +66,46 @@ Contains the user's identity and organizational context.
 }
 ```
 
-### 3. Signature
-A cryptographic hash of the Header and Payload, signed with the Auth Service's Private Key.
-
 ---
 
 ## 4. Dependencies, Tools, and Architecture
 
-To build this architecture, we will utilize the following stack (assuming a Spring Boot ecosystem):
-
 ### A. Auth Service (The Issuer)
-*   **Spring Security:** Core security framework framework for managing login paths and password hashing (BCrypt).
-*   **nimbus-jose-jwt / jjwt:** Java libraries for generating, signing, and managing JWTs using RSA algorithms.
-*   **Vault / AWS Secrets Manager / Spring Cloud Config:** To securely store the RSA Private Key. Do not hardcode this in properties files.
-*   **Database:** PostgreSQL/MySQL to store `users` and `organizations`.
+*   **Spring Security:** Core security framework.
+*   **nimbus-jose-jwt / jjwt:** Libraries for JWT generation and RS256 signing.
+*   **Vault / AWS Secrets Manager:** Secure storage for the RSA Private Key.
 
-### B. API Gateway (The Edge Enforcer)
-*   **Spring Cloud Gateway:** To route requests to respective microservices.
-*   **Spring Security WebFlux (OAuth2 Resource Server):** Configured to act as a Resource Server. It will be configured with a `jwk-set-uri` (pointing to the Auth Service or an API gateway local cache) to automatically resolve the public key and validate signatures.
-*   **Custom Global Filter:** To extract the JWT claims (like `userId`, `tenantId`) and inject them as trusted HTTP Headers (e.g., `X-User-Id`) for the downstream services.
+### B. API Gateway (Edge Protection)
+*   **Spring Cloud Gateway:** Routing and edge filtering.
+*   **Spring Security WebFlux (OAuth2 Resource Server):** Validates the JWT signature, expiration, and status claims.
+*   **JWKS Endpoint:** Fetches public keys from the Auth Service.
 
-### C. Downstream Services (The Workers - Wallet, KYC)
-*   **Spring Web:** They accept incoming requests from the Gateway.
-*   **Filter / Interceptor:** Even though the Gateway validated the JWT, downstream services can use a simple interceptor to read the `X-User-Id` header to build their local `SecurityContext` or directly use it in their controllers.
+### C. Downstream Services (The Data Plane)
+*   **Spring Security (OAuth2 Resource Server):** Even behind the gateway, services maintain their own security configuration to validate JWTs locally.
+*   **Security Context:** Claims (like `userId`) are extracted from the validated JWT and populated into the `SecurityContextHolder`, ensuring the application logic only ever works with verified identities.
 
 ---
 
 ## 5. Implementation Strategy & Plan
 
 ### Phase 1: Cryptographic Foundation
-1.  Generate an RSA Key Pair (Private & Public).
-2.  Store the Private Key securely in the Auth Service.
-3.  Create a `/keys` or `/.well-known/jwks.json` endpoint on the Auth Service to expose the Public Key.
+1.  Generate an RSA Key Pair.
+2.  Store Private Key in Auth Service (Securely).
+3.  Expose Public Key via `/.well-known/jwks.json` on the Auth Service.
 
 ### Phase 2: Auth Service Development
-1.  Implement the central `users` and `organizations` database schemas.
-2.  Create the `/login` endpoint.
-3.  Implement token generation: Assemble the payload with custom claims (`userId`, `status`, `tenantId`) and sign it with the Private Key.
+1.  Implement `/login` and token generation with custom claims.
+2.  Sign tokens with the RS256 algorithm.
 
 ### Phase 3: API Gateway Configuration
-1.  Configure the Gateway as an OAuth2 Resource Server.
-2.  Point the `jwk-set-uri` to the Auth Service's public key endpoint.
-3.  Implement a security filter to reject tokens where `status != ACTIVE`.
-4.  Implement a global routing filter to mutate incoming requests, extracting the JWT claims and appending them as `X-User-Id` and `X-Tenant-Id` headers.
+1.  Configure as a Resource Server using the Auth Service's JWKS endpoint.
+2.  Implement filters for status-based rejection (`BANNED`, etc.).
 
-### Phase 4: Downstream Service Refactoring
-1.  Remove existing database-driven authentication logic from Wallet/KYC/Vouchers.
-2.  Drop local `users` tables (following the Data Migration Plan).
-3.  Update controllers/services to read identity entirely from the `X-User-Id` header provided by the Gateway.
-4.  Update business logic to rely on the global UUID instead of local auto-incrementing IDs.
+### Phase 4: Downstream Service Hardening
+1.  Configure each microservice (Wallet, KYC, etc.) as an **OAuth2 Resource Server**.
+2.  Implement local JWT signature validation using the same JWKS endpoint.
+3.  **Discard trust in plain HTTP headers**; always derive `userId` from the validated JWT claims.
 
-### Phase 5: Testing & Deployment
-1.  Test token issuance and expiration.
-2.  Test Gateway rejection of tampered tokens, expired tokens, or `BANNED` status claims.
-3.  Test cross-service flows (Auth -> Gateway -> Wallet) to ensure the `uuid` propagates correctly.
+### Phase 5: Verification
+1.  **Direct Access Test:** Attempt to call a service directly with a spoofed header; it must fail due to a missing/invalid JWT.
+2.  **Signature Test:** Attempt to use a token signed with a different key; it must fail at both the Gateway and the Service level.
