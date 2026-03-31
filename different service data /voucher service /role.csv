@@ -1,0 +1,4 @@
+id,description,name
+1,Platform administrator,PLATFORM_ADMIN
+2,Standard user,USER
+4,Tenant administrator,TENANT_ADMIN

@@ -1,0 +1,25 @@
+"id","username","email","password_hash","created_at","city","phone_number","organization_id","role","status"
+21,TestAdmin,test.admin@gmail.com,$2a$10$85QluCnX4gvjLY5YEhCzweNNHx2J6mWUszESwiOHmFgxQQUA8uPzC,2026-02-26 17:15:26.353 +0530,string,"5315370469",2,ROLE_ORG_ADMIN,ACTIVE
+22,TestOrgUser1,testorg1@gmail.com,$2a$10$3UDyZA16vbHZrJw5Fuy8mOfMBysRWjLBU/VV8QBzQRCIL3j1cXzQq,2026-02-26 17:16:34.623 +0530,string,"8317061574",2,ROLE_USER,ACTIVE
+20,Tithaal,tithaalsheth@gmail.com,$2a$10$ruB6PdqI38jaQPmAiW2UTeCXHnRNeal/9DU7pi3A/UY3c2kTQu2HO,2026-02-20 14:54:27.030 +0530,string,"9033329893",2,ROLE_USER,ACTIVE
+23,AzilenAdmin,Azilen.admin@gmail.com,$2a$10$K1NKk2G96PYnHuvxTokIXePew0tNA1DFWm1uxyaPxMtx9.3OZh6Re,2026-02-27 15:54:03.424 +0530,string,"3624624296",3,ROLE_ORG_ADMIN,ACTIVE
+24,AzilenUser1,testuser1@azilen.com,$2a$10$6dn.GA6xeSe.wIBiYQES2eS1UWIqV2i99wkaO4jEXOwyQnzKYWK5q,2026-02-27 15:55:54.146 +0530,string,"3141537828",3,ROLE_USER,ACTIVE
+31,sender_concurrent,sender_c@example.com,hash,2026-03-12 11:34:49.546 +0530,,,,ROLE_USER,ACTIVE
+32,recipient_concurrent,recipient_c@example.com,hash,2026-03-12 11:34:49.558 +0530,,,,ROLE_USER,ACTIVE
+50,recipient_concurrent_d0453d78,recipient_c_d0453d78@example.com,hash,2026-03-12 11:40:52.275 +0530,,,,ROLE_USER,ACTIVE
+1,testuser,testuser@example.com,$2a$10$mSnoZRv6kuC7pnDweEOr6Ou31AIFgRIBIATkqyHNanPrwcIDTdXdC,2026-02-03 16:40:41.588 +0530,,,2,ROLE_USER,ACTIVE
+2,testinguser1,testinguser1@example.com,$2a$10$Pq87Fw5CzHy0fVE5UgGOEepnzrOyUyvTqu6CZJEIvQZLe/.GBkBvi,2026-02-04 17:03:06.498 +0530,,,2,ROLE_USER,ACTIVE
+25,SuperAdmin,SuperAdmin@PlatformAdmin.com,$2a$10$UhefszSikPEAqc/fl3iRKuJLn8kKx2BHphN4RwaJs1Bk8a0aPoj/O,2026-03-05 17:15:10.361 +0530,,,4,ROLE_SUPER_ADMIN,ACTIVE
+6,john_doe,john@example.com,$2a$10$irpzO7DiJvPK9tksSDxQ/.kY3PxE5lYIFrkNLg6qxSepwsVNfViJu,2026-02-06 10:34:26.082 +0530,San Francisco,"0987654321",2,ROLE_USER,ACTIVE
+49,sender_concurrent_d0453d78,sender_c_d0453d78@example.com,hash,2026-03-12 11:40:52.261 +0530,,,2,ROLE_USER,ACTIVE
+17,steve_smith,steve@example.com,$2a$10$7PGTfmcLP7SLgcTraC974.h1bnL7UKPJzYr4.b1lPNcLNLeIVwKsW,2026-02-16 15:50:16.559 +0530,London,"0987654321",3,ROLE_USER,ACTIVE
+18,string,user@example.com,$2a$10$Q1JIXX4MptPNzOdrtUj/D.MfqClIZLImd86NoeA56Ao66PeRBCqVa,2026-02-19 16:57:43.122 +0530,string,string,3,ROLE_USER,ACTIVE
+19,karan,karan.gondaliya@azilen.com,$2a$10$lBal3EFihnXG8hGDWsEgU.lPaU0nf1jmGVuo5dhYg5Ue.6poOYnjS,2026-02-19 17:20:26.166 +0530,string,string,3,ROLE_USER,ACTIVE
+7,TithaalSheth,tithaal@example.com,$2a$10$N4CQ4Vmug/UUo7JIO8RO6ORicQ1OY6jV9mpZTyuCzPvjREdJsgPPK,2026-02-06 17:45:37.362 +0530,San Francisco,"0987654321",3,ROLE_USER,ACTIVE
+10,alice_doe,alice@example.com,$2a$10$XoYCaMvI/jQO//tLf2ub4ORU/fVaFaxytyTC5Ma6RLgojPm5ZG2..,2026-02-10 13:21:02.684 +0530,New York,"1234567890",3,ROLE_USER,ACTIVE
+11,bob_smith,bob@example.com,$2a$10$H3V.QNiPuwDa00rptWq4nugnaHfw69wCjvAHyTivCKdLbRaRMeGzG,2026-02-10 13:21:18.196 +0530,London,"0987654321",3,ROLE_USER,ACTIVE
+13,bob_smith1,bob1@example.com,$2a$10$ikwbfgp97y8Dpui97AhBBejFjHYb5dZFo6PwBxfZwWEoU4GNdYaLa,2026-02-10 16:58:53.332 +0530,London,"0987654321",3,ROLE_USER,ACTIVE
+8,testuser1,testuser1@example.com,$2a$10$ifOgUZm.bYFhtAPftnPTmuat79AQs7ytqjgK0sxck9BOIkvmnboxq,2026-02-09 14:01:29.774 +0530,New York,"1234567890",2,ROLE_USER,ACTIVE
+9,testuser2,testuser1@asd,$2a$10$Z2VxZTOpGcqbb1irDUeh0eMu/CSP9AYg9ABvUSDfsnCBlp9pZlmMm,2026-02-09 14:10:57.104 +0530,New York,"1234567890",2,ROLE_USER,ACTIVE
+15,user_07b4cef5,user_07b4cef5@example.com,$2a$10$L41sTGaKFTTAtxG0RbjEGe31So4aLD2tcuiDUJQVNWdBFc7LupkTW,2026-02-16 15:34:20.852 +0530,New York,"1234567890",2,ROLE_USER,ACTIVE
+16,user_7dc2913b,user_7dc2913b@example.com,$2a$10$xFhuS3hSADIiWoY8H5jMW.8s5NEjxbWDj4DCRxPWnP9hJi2otYZi.,2026-02-16 15:34:38.091 +0530,New York,"1234567890",2,ROLE_USER,ACTIVE

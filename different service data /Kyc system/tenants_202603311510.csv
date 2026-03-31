@@ -1,0 +1,7 @@
+"id","tenant_id","name","email","plan","is_active","max_daily_attempts","allowed_document_types","api_key","created_at","updated_at"
+12,system,System,system@kyc.com,BASIC,true,5,"PAN,AADHAAR",,2026-03-03 14:37:14.281,2026-03-03 14:37:14.281
+13,default,Default Tenant,admin@kyc.com,BASIC,true,5,"PAN,AADHAAR",,2026-03-03 14:37:14.427,2026-03-03 14:37:14.427
+14,test_bank,Demo Bank,ops@testbank.com,BASIC,true,5,"PAN,AADHAAR",kyc_b831ace3211d41fbaf5d3a8690f568b2,2026-03-03 14:53:34.201,2026-03-03 15:11:26.768
+15,acme_bank,Acme Bank International,kyc-ops@acmebank.com,BASIC,true,15,"PAN,AADHAAR,PASSPORT,LICENSE",kyc_29f2d504aabb444b8cb5735ad6d85096,2026-03-05 11:38:32.166,2026-03-05 11:42:57.119
+16,nova_finance,Nova Finance Pvt Ltd,compliance@novafinance.in,BASIC,true,3,"PAN,AADHAAR",kyc_caff97ef187f494f88ea4ca7c940d4f3,2026-03-05 11:39:30.350,2026-03-05 11:45:15.593
+21,hdfc_bank,HDFC Bank Updated Name,new-ops@hdfcbank.com,BASIC,true,10,"PAN,AADHAAR",kyc_5f913a45fba841119cb9a0983f20c6e8,2026-03-16 09:35:28.671,2026-03-16 09:37:50.484
