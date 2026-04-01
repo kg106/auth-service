@@ -21,4 +21,7 @@ public class RegistrationRequest {
 
     @NotBlank
     private String lastname;
+
+    @NotBlank
+    private String mobileNumber;
 }

@@ -6,7 +6,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "user_role", schema = "auth")
+@Table(name = "roles", schema = "auth")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -16,18 +16,10 @@ public class UserRole {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "auth_user_role_id")
     private Long id;
 
-    private String rolename;
-    private String description;
-    
-    private String createdby;
-    private String updatedby;
+    private String name;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
 }

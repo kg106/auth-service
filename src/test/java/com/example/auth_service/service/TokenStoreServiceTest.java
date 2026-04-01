@@ -9,6 +9,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
 import java.time.Duration;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -34,40 +35,61 @@ class TokenStoreServiceTest {
 
     @Test
     void testStoreRefreshToken_HashesToken() {
+        UUID userId = UUID.randomUUID();
         String rawToken = "my-secret-token";
-        tokenStoreService.storeRefreshToken(1L, "dev-1", rawToken);
+        tokenStoreService.storeRefreshToken(userId, "dev-1", rawToken);
 
         ArgumentCaptor<String> hashCaptor = ArgumentCaptor.forClass(String.class);
-        verify(valueOperations).set(eq("session:1:dev-1"), hashCaptor.capture(), any(Duration.class));
+        verify(valueOperations).set(eq("session:" + userId + ":dev-1"), hashCaptor.capture(), any(Duration.class));
 
         assertNotNull(hashCaptor.getValue());
         assertNotEquals(rawToken, hashCaptor.getValue()); // Ensure it's safely hashed
     }
 
     @Test
-    void testValidateAndRotateRefreshToken_ValidToken_ReturnsTrueAndDeletes() {
-        String rawToken = "my-secret-token";
-        tokenStoreService.storeRefreshToken(1L, "dev-1", rawToken);
-        
+    void testStoreRefreshToken() {
+        UUID userId = UUID.randomUUID();
+        tokenStoreService.storeRefreshToken(userId, "device-1", "my-refresh-token");
+
         ArgumentCaptor<String> hashCaptor = ArgumentCaptor.forClass(String.class);
-        verify(valueOperations).set(eq("session:1:dev-1"), hashCaptor.capture(), any(Duration.class));
-        String expectedHash = hashCaptor.getValue();
-
-        when(valueOperations.get("session:1:dev-1")).thenReturn(expectedHash);
-
-        boolean isValid = tokenStoreService.validateAndRotateRefreshToken(1L, "dev-1", rawToken);
-        
-        assertTrue(isValid);
-        verify(redisTemplate).delete("session:1:dev-1"); // Essential rotation check
+        verify(valueOperations).set(eq("session:" + userId + ":device-1"), hashCaptor.capture(), any(Duration.class));
+        assertNotNull(hashCaptor.getValue());
     }
 
     @Test
-    void testValidateAndRotateRefreshToken_InvalidToken_ReturnsFalseAndDeletes() {
-        when(valueOperations.get("session:1:dev-1")).thenReturn("differentHash");
-
-        boolean isValid = tokenStoreService.validateAndRotateRefreshToken(1L, "dev-1", "bad-token");
+    void testValidateAndRotateRefreshToken_Success() {
+        UUID userId = UUID.randomUUID();
+        String rawToken = "valid-refresh-token";
         
-        assertFalse(isValid);
-        verify(redisTemplate).delete("session:1:dev-1"); // Safety measure for compromised sessions
+        // 1. Store a token
+        tokenStoreService.storeRefreshToken(userId, "device-1", rawToken);
+
+        // 2. Capture the securely hashed token that was just saved
+        ArgumentCaptor<String> hashCaptor = ArgumentCaptor.forClass(String.class);
+        verify(valueOperations).set(eq("session:" + userId + ":device-1"), hashCaptor.capture(), any(Duration.class));
+        String expectedHash = hashCaptor.getValue();
+        
+        // 3. Mock the behavior for retrieving
+        when(valueOperations.get("session:" + userId + ":device-1")).thenReturn(expectedHash);
+
+        // 4. Validate the SAME token
+        boolean isValid = tokenStoreService.validateAndRotateRefreshToken(userId, "device-1", rawToken);
+        
+        assertTrue(isValid, "Token should be valid");
+        verify(redisTemplate).delete("session:" + userId + ":device-1");
+    }
+
+    @Test
+    void testValidateAndRotateRefreshToken_Failure() {
+        UUID userId = UUID.randomUUID();
+        
+        // Mock the behavior for mismatch
+        when(valueOperations.get("session:" + userId + ":device-1")).thenReturn("differentHash");
+
+        // 2. Try to validate a WRONG token
+        boolean isValid = tokenStoreService.validateAndRotateRefreshToken(userId, "device-1", "wrong-token");
+        
+        assertFalse(isValid, "Token should be invalid");
+        verify(redisTemplate).delete("session:" + userId + ":device-1");
     }
 }

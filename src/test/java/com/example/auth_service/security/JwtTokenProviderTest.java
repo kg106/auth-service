@@ -8,7 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -25,14 +25,17 @@ class JwtTokenProviderTest {
 
     @Test
     void testGenerateAndValidateToken() {
-        UserRole role = UserRole.builder().rolename("ROLE_ADMIN").build();
-        Tenant tenant = Tenant.builder().id(999L).build();
+        UserRole role = UserRole.builder().name("ROLE_ADMIN").build();
+        UUID tenantId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        
+        Tenant tenant = Tenant.builder().id(tenantId).build();
         User user = User.builder()
-                .id(100L)
+                .id(userId)
                 .email("test@example.com")
                 .tenant(tenant)
                 .status("ACTIVE")
-                .roles(Set.of(role))
+                .role(role)
                 .build();
 
         String token = jwtTokenProvider.generateAccessToken(user);
@@ -41,8 +44,8 @@ class JwtTokenProviderTest {
         Claims claims = jwtTokenProvider.validateTokenAndGetClaims(token);
 
         assertEquals("test@example.com", claims.getSubject());
-        assertEquals(100L, claims.get("userId", Long.class));
-        assertEquals(999L, claims.get("tenantId", Long.class));
+        assertEquals(userId.toString(), claims.get("userId", String.class));
+        assertEquals(tenantId.toString(), claims.get("tenantId", String.class));
         assertEquals("ACTIVE", claims.get("status", String.class));
         
         List<?> roles = claims.get("roles", List.class);

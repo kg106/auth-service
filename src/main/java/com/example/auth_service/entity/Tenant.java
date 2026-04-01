@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "tenants", schema = "auth")
@@ -15,17 +16,19 @@ import java.time.LocalDateTime;
 public class Tenant {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "auth_tenants_id")
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
-    @Column(name = "tennant_id")
+    @Column(name = "tenant_id")
     private String tenantIdStr;
 
     private String name;
     private String email;
     private String plan;
     
+    @Column(name = "status")
+    private String status;
+
     @Column(name = "is_active")
     private Boolean isActive;
 
@@ -43,17 +46,4 @@ public class Tenant {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    @Column(name = "org_code")
-    private String orgCode;
-
-    private String status;
-
-    private String subdomain;
-    private String createdby;
-    private String updatedby;
-    private String description;
-
-    @Column(name = "tenant_type")
-    private String tenantType;
 }

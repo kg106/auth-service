@@ -8,6 +8,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.UUID;
 
 @Service
 public class TokenStoreService {
@@ -20,13 +21,13 @@ public class TokenStoreService {
         this.redisTemplate = redisTemplate;
     }
 
-    public void storeRefreshToken(Long userId, String deviceId, String rawRefreshToken) {
+    public void storeRefreshToken(UUID userId, String deviceId, String rawRefreshToken) {
         String key = "session:" + userId + ":" + deviceId;
         String hash = hashToken(rawRefreshToken);
         redisTemplate.opsForValue().set(key, hash, Duration.ofDays(REFRESH_TOKEN_TTL_DAYS));
     }
 
-    public boolean validateAndRotateRefreshToken(Long userId, String deviceId, String rawRefreshToken) {
+    public boolean validateAndRotateRefreshToken(UUID userId, String deviceId, String rawRefreshToken) {
         String key = "session:" + userId + ":" + deviceId;
         String storedHash = redisTemplate.opsForValue().get(key);
 
@@ -56,7 +57,7 @@ public class TokenStoreService {
         return Boolean.TRUE.equals(redisTemplate.hasKey(key));
     }
     
-    public void deleteSession(Long userId, String deviceId) {
+    public void deleteSession(UUID userId, String deviceId) {
         String key = "session:" + userId + ":" + deviceId;
         redisTemplate.delete(key);
     }

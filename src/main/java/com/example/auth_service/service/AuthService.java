@@ -48,24 +48,25 @@ public class AuthService {
             throw new RuntimeException("User already exists with email: " + request.getEmail());
         }
 
-        UserRole defaultRole = roleRepository.findByRolename("USER")
+        UserRole defaultRole = roleRepository.findByName("ROLE_USER")
                 .orElseGet(() -> roleRepository.save(
-                        UserRole.builder().rolename("USER").description("Default User").build()
+                        UserRole.builder().name("ROLE_USER").build()
                 ));
 
         User user = User.builder()
                 .tenant(tenantOpt.get())
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .firstname(request.getFirstname())
-                .lastname(request.getLastname())
+                .name(request.getFirstname() + " " + request.getLastname())
+                .mobileNumber(request.getMobileNumber())
+                .role(defaultRole)
+                .tenantName(tenantOpt.get().getName())
                 .isActive(true)
                 .status("ACTIVE")
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        user.getRoles().add(defaultRole);
         userRepository.save(user);
     }
 

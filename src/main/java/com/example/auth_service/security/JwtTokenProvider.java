@@ -25,14 +25,12 @@ public class JwtTokenProvider {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + JWT_EXPIRATION_MS);
 
-        List<String> roles = user.getRoles().stream()
-                .map(UserRole::getRolename)
-                .collect(Collectors.toList());
+        List<String> roles = List.of(user.getRole().getName());
 
         return Jwts.builder()
                 .subject(user.getEmail())
-                .claim("userId", user.getId())
-                .claim("tenantId", user.getTenant() != null ? user.getTenant().getId() : null)
+                .claim("userId", user.getId() != null ? user.getId().toString() : null)
+                .claim("tenantId", user.getTenant() != null && user.getTenant().getId() != null ? user.getTenant().getId().toString() : null)
                 .claim("status", user.getStatus())
                 .claim("roles", roles)
                 .id(UUID.randomUUID().toString()) // jti
