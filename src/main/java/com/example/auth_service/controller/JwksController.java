@@ -1,6 +1,8 @@
 package com.example.auth_service.controller;
 
 import com.example.auth_service.security.RsaKeyManager;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -9,6 +11,7 @@ import java.util.Map;
 import java.util.List;
 
 @RestController
+@Tag(name = "JWKS", description = "Endpoint for retrieving the public key set (JWKS) used for JWT verification.")
 public class JwksController {
 
     private final RsaKeyManager rsaKeyManager;
@@ -18,6 +21,7 @@ public class JwksController {
     }
 
     @GetMapping("/.well-known/jwks.json")
+    @Operation(summary = "Get JWKS", description = "Returns the JSON Web Key Set containing the public key for verifying RS256 signatures.")
     public Map<String, Object> getJwks() {
         String n = Base64.getUrlEncoder().withoutPadding().encodeToString(
                 rsaKeyManager.getPublicKey().getModulus().toByteArray()
