@@ -18,9 +18,20 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configure(http))
+                .httpBasic(basic -> basic.disable())
+                .formLogin(form -> form.disable())
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/api/v1/auth/**", "/.well-known/jwks.json").permitAll()
-                        .anyRequest().permitAll());
+                        .requestMatchers(
+                                "/api/v1/auth/**",
+                                "/.well-known/jwks.json",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/webjars/**",
+                                "/actuator/**")
+                        .permitAll()
+                        .anyRequest().authenticated());
         return http.build();
     }
 }

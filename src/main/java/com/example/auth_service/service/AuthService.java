@@ -48,9 +48,9 @@ public class AuthService {
             throw new RuntimeException("User already exists with email: " + request.getEmail());
         }
 
-        UserRole defaultRole = roleRepository.findByName("ROLE_USER")
+        UserRole defaultRole = roleRepository.findByName("USER")
                 .orElseGet(() -> roleRepository.save(
-                        UserRole.builder().name("ROLE_USER").build()
+                        UserRole.builder().name("USER").build()
                 ));
 
         User user = User.builder()

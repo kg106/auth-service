@@ -17,6 +17,18 @@ CREATE TABLE IF NOT EXISTS auth.roles (
 );
 
 -- =============================================================================
+-- 1.5) STATUSES TABLE
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS auth.statuses (
+    id SERIAL PRIMARY KEY,
+    name CHARACTER VARYING(20) UNIQUE NOT NULL
+);
+
+INSERT INTO auth.statuses (name) VALUES 
+('ACTIVE'), ('INACTIVE'), ('SUSPENDED'), ('DELETED')
+ON CONFLICT (name) DO NOTHING;
+
+-- =============================================================================
 -- 2) TENANTS TABLE (Organizations)
 -- MIGRATION STRATEGY: Primary Key MUST be UUID to guarantee global uniqueness
 -- =============================================================================
@@ -65,9 +77,10 @@ CREATE TABLE IF NOT EXISTS auth.users (
 -- 5) SEED DEFAULT ROLES
 -- =============================================================================
 INSERT INTO auth.roles (id, name) VALUES 
-    (1, 'ROLE_USER'),
-    (2, 'ROLE_ORG_ADMIN'),
-    (3, 'ROLE_SUPER_ADMIN')
+    (1, 'USER'),
+    (2, 'ADMIN'),
+    (3, 'TENANT_ADMIN'),
+    (4, 'SUPER_ADMIN')
 ON CONFLICT (id) DO NOTHING;
 
 -- =============================================================================

@@ -5,20 +5,19 @@
 
 -- Ensure standard roles exist in auth.roles
 INSERT INTO auth.roles (id, name) VALUES 
-(1, 'ROLE_USER'), 
-(2, 'ROLE_ORG_ADMIN'), 
-(3, 'ROLE_SUPER_ADMIN')
+(1, 'USER'), 
+(2, 'ADMIN'), 
+(3, 'TENANT_ADMIN'),
+(4, 'SUPER_ADMIN')
 ON CONFLICT (id) DO NOTHING;
-
--- Map across all services using normalized_users_pool (if still available) or migration map
--- Here we use the user_migration_map to find the correct central UUID.
 
 -- 1. KYC Roles
 INSERT INTO auth.user_roles (user_id, role_id)
 SELECT m.new_uuid, 
        CASE 
-         WHEN r.name = 'ROLE_SUPER_ADMIN' THEN 3
-         WHEN r.name LIKE '%ADMIN%' THEN 2 
+         WHEN r.name = 'Super_Admin' THEN 4
+         WHEN r.name = 'Tenant_Admin' THEN 3
+         WHEN r.name = 'Default_Admin' THEN 2 
          ELSE 1 
        END
 FROM staging.kyc_user_roles ur
@@ -30,8 +29,8 @@ ON CONFLICT DO NOTHING;
 INSERT INTO auth.user_roles (user_id, role_id)
 SELECT m.new_uuid, 
        CASE 
-         WHEN w.role = 'ROLE_SUPER_ADMIN' THEN 3
-         WHEN w.role = 'ROLE_ORG_ADMIN' THEN 2 
+         WHEN w.role = 'ROLE_SUPER_ADMIN' THEN 4
+         WHEN w.role = 'ROLE_ORG_ADMIN' THEN 3 
          ELSE 1 
      END
 FROM staging.wallet_users w
@@ -42,7 +41,8 @@ ON CONFLICT DO NOTHING;
 INSERT INTO auth.user_roles (user_id, role_id)
 SELECT m.new_uuid, 
        CASE 
-         WHEN r.name LIKE '%ADMIN%' THEN 2 
+         WHEN r.name = 'PLATFORM_ADMIN' THEN 4
+         WHEN r.name = 'TENANT_ADMIN' THEN 3
          ELSE 1 
        END
 FROM staging.voucher_user_roles ur
@@ -54,7 +54,9 @@ ON CONFLICT DO NOTHING;
 INSERT INTO auth.user_roles (user_id, role_id)
 SELECT m.new_uuid, 
        CASE 
-         WHEN r.role_name LIKE '%ADMIN%' THEN 2 
+         WHEN r.role_name = 'SUPER_ADMIN' THEN 4
+         WHEN r.role_name = 'ORG_ADMIN' THEN 3
+         WHEN r.role_name = 'ADMIN' THEN 2
          ELSE 1 
        END
 FROM staging.order_users o
