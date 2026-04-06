@@ -72,10 +72,10 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmailWithRolesAndTenant(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+                .orElseThrow(() -> new RuntimeException("Invalid email"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            throw new RuntimeException("Invalid credentials");
+            throw new RuntimeException("Invalid password");
         }
 
         if (!Boolean.TRUE.equals(user.getIsActive()) || !"ACTIVE".equals(user.getStatus())) {
