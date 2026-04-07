@@ -26,6 +26,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers(AntPathRequestMatcher.antMatcher("/api/v1/auth/**")).permitAll()
+                        .requestMatchers(AntPathRequestMatcher.antMatcher("/api/v1/users/**")).permitAll()
                         .requestMatchers(AntPathRequestMatcher.antMatcher("/.well-known/jwks.json")).permitAll()
                         .requestMatchers(AntPathRequestMatcher.antMatcher("/v3/api-docs/**")).permitAll()
                         .requestMatchers(AntPathRequestMatcher.antMatcher("/v3/api-docs")).permitAll()
