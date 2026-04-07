@@ -44,7 +44,10 @@ public class SecurityConfig {
                         .requestMatchers(AntPathRequestMatcher.antMatcher("/v3/api-docs")).permitAll()
                         .requestMatchers(AntPathRequestMatcher.antMatcher("/swagger-ui/**")).permitAll()
                         .requestMatchers(AntPathRequestMatcher.antMatcher("/swagger-ui.html")).permitAll()
+                        .requestMatchers(AntPathRequestMatcher.antMatcher("/swagger-resources/**")).permitAll()
                         .requestMatchers(AntPathRequestMatcher.antMatcher("/webjars/**")).permitAll()
+                        .requestMatchers(AntPathRequestMatcher.antMatcher("/configuration/ui")).permitAll()
+                        .requestMatchers(AntPathRequestMatcher.antMatcher("/configuration/security")).permitAll()
                         .requestMatchers(AntPathRequestMatcher.antMatcher("/actuator/**")).permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

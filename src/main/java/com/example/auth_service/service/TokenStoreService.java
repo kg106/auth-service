@@ -16,6 +16,7 @@ public class TokenStoreService {
     private final StringRedisTemplate redisTemplate;
     private final long REFRESH_TOKEN_TTL_DAYS = 7;
     private final long ACCESS_TOKEN_TTL_MINUTES = 15;
+    private final long RESET_TOKEN_TTL_MINUTES = 15;
 
     public TokenStoreService(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
@@ -24,7 +25,9 @@ public class TokenStoreService {
     public void storeRefreshToken(UUID userId, String deviceId, String rawRefreshToken) {
         String key = "session:" + userId + ":" + deviceId;
         String hash = hashToken(rawRefreshToken);
-        redisTemplate.opsForValue().set(key, hash, Duration.ofDays(REFRESH_TOKEN_TTL_DAYS));
+        @SuppressWarnings("null")
+        Duration ttl = Duration.ofDays(REFRESH_TOKEN_TTL_DAYS);
+        redisTemplate.opsForValue().set(key, hash, ttl);
     }
 
     public boolean validateAndRotateRefreshToken(UUID userId, String deviceId, String rawRefreshToken) {
@@ -49,7 +52,9 @@ public class TokenStoreService {
 
     public void blacklistAccessToken(String jti) {
         String key = "blacklist:" + jti;
-        redisTemplate.opsForValue().set(key, "revoked", Duration.ofMinutes(ACCESS_TOKEN_TTL_MINUTES));
+        @SuppressWarnings("null")
+        Duration ttl = Duration.ofMinutes(ACCESS_TOKEN_TTL_MINUTES);
+        redisTemplate.opsForValue().set(key, "revoked", ttl);
     }
 
     public boolean isAccessTokenBlacklisted(String jti) {
@@ -62,7 +67,30 @@ public class TokenStoreService {
         redisTemplate.delete(key);
     }
 
+    public void storePasswordResetToken(String email, String rawToken) {
+        String key = "reset:" + email;
+        String hash = hashToken(rawToken);
+        @SuppressWarnings("null")
+        Duration ttl = Duration.ofMinutes(RESET_TOKEN_TTL_MINUTES);
+        redisTemplate.opsForValue().set(key, hash, ttl);
+    }
+
+    public boolean validatePasswordResetToken(String email, String rawToken) {
+        String key = "reset:" + email;
+        String storedHash = redisTemplate.opsForValue().get(key);
+        if (storedHash == null) {
+            return false;
+        }
+        String incomingHash = hashToken(rawToken);
+        if (storedHash.equals(incomingHash)) {
+            redisTemplate.delete(key); // Use only once
+            return true;
+        }
+        return false;
+    }
+
     private String hashToken(String token) {
+        if (token == null) return "";
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(token.getBytes(StandardCharsets.UTF_8));

@@ -17,7 +17,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/admin")
-@Tag(name = "Admin", description = "Endpoints for Admin to manage users under its organization.")
+@Tag(name = "3. Admin - Organization Management", description = "Endpoints for Admin to manage users under its organization.")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {

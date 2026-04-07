@@ -162,6 +162,38 @@ public class AuthService {
                 .build();
     }
 
+    public void forgotPassword(ForgotPasswordRequest request) {
+        log.info("Forgot password request for email: {}", request.getEmail());
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> {
+                    log.error("Email not found for forgot password: {}", request.getEmail());
+                    return new ResourceNotFoundException("User not found with email: " + request.getEmail());
+                });
+
+        String resetToken = UUID.randomUUID().toString();
+        tokenStoreService.storePasswordResetToken(user.getEmail(), resetToken);
+
+        // In a real application, you would send an email here.
+        log.info("Password reset token generated for {}: {}", user.getEmail(), resetToken);
+    }
+
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request, String email) {
+        log.info("Resetting password for email: {}", email);
+        if (!tokenStoreService.validatePasswordResetToken(email, request.getToken())) {
+            log.error("Invalid or expired reset token for email: {}", email);
+            throw new BadRequestException("Invalid or expired reset token");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+        log.info("Password reset successfully for user: {}", email);
+    }
+
     public void logout(LogoutRequest request) {
         log.info("Logging out user id: {}", request.getUserId());
         tokenStoreService.deleteSession(request.getUserId(), request.getDeviceId());

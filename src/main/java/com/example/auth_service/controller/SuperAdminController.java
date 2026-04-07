@@ -14,7 +14,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/super-admin")
-@Tag(name = "Super Admin", description = "Endpoints for Super Admin to manage users and organizations.")
+@Tag(name = "4. Super Admin - Global Management", description = "Endpoints for Super Admin to manage all users and organizations.")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('SUPER_ADMIN')")
 public class SuperAdminController {

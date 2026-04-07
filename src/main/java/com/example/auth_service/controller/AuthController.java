@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/auth")
-@Tag(name = "Authentication", description = "Endpoints for user registration, login, token refresh, and logout.")
+@Tag(name = "1. Auth & Registration", description = "Endpoints for user registration, login, token refresh, and logout.")
 public class AuthController {
 
     private final AuthService authService;
@@ -42,8 +42,20 @@ public class AuthController {
 
     @PostMapping("/logout")
     @Operation(summary = "Logout user", description = "Invalidates the refresh token and clears the session.")
-    public ResponseEntity<String> logout(@Valid @RequestBody LogoutRequest request) {
+    public ResponseEntity<Void> logout(@RequestBody LogoutRequest request) {
         authService.logout(request);
-        return ResponseEntity.ok("Logged out successfully");
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.forgotPassword(request);
+        return ResponseEntity.accepted().build();
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request, @RequestParam String email) {
+        authService.resetPassword(request, email);
+        return ResponseEntity.noContent().build();
     }
 }
