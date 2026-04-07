@@ -2,12 +2,15 @@ package com.example.auth_service.service;
 
 import com.example.auth_service.dto.UserResponseDTO;
 import com.example.auth_service.entity.User;
+import com.example.auth_service.exception.ResourceNotFoundException;
 import com.example.auth_service.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class UserService {
 
     private final UserRepository userRepository;
@@ -17,8 +20,12 @@ public class UserService {
     }
 
     public UserResponseDTO getUserById(UUID userId) {
+        log.info("Fetching user with id: {}", userId);
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+                .orElseThrow(() -> {
+                    log.error("User not found with id: {}", userId);
+                    return new ResourceNotFoundException("User not found with id: " + userId);
+                });
 
         return UserResponseDTO.builder()
                 .id(user.getId())
