@@ -4,6 +4,7 @@ import com.example.auth_service.dto.*;
 import com.example.auth_service.entity.User;
 import com.example.auth_service.exception.BadRequestException;
 import com.example.auth_service.exception.ResourceNotFoundException;
+import com.example.auth_service.mapper.UserMapper;
 import com.example.auth_service.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,36 +20,45 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, UserMapper userMapper) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.userMapper = userMapper;
     }
 
     public UserResponseDTO getUserById(UUID userId) {
-        log.info("Fetching user with id: {}", userId);
+        log.info("Fetching user with ID: {}", userId);
+        @SuppressWarnings("null")
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> {
-                    log.error("User not found with id: {}", userId);
-                    return new ResourceNotFoundException("User not found with id: " + userId);
+                    log.error("User not found with ID: {}", userId);
+                    return new ResourceNotFoundException("User not found with ID: " + userId);
                 });
 
-        return mapToResponse(user);
+        return userMapper.toResponse(user);
     }
 
     public UserResponseDTO getUserByEmail(String email) {
         log.info("Fetching user with email: {}", email);
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
-        return mapToResponse(user);
+                .orElseThrow(() -> {
+                    log.error("User not found with email: {}", email);
+                    return new ResourceNotFoundException("User not found with email: " + email);
+                });
+        return userMapper.toResponse(user);
     }
 
     @Transactional
     public UserResponseDTO updateProfile(UUID userId, UpdateProfileRequest request) {
-        log.info("Updating profile for user id: {}", userId);
+        log.info("Updating profile for user ID: {}", userId);
         @SuppressWarnings("null")
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> {
+                    log.error("User not found with ID: {} during profile update", userId);
+                    return new ResourceNotFoundException("User not found");
+                });
         return updateProfileInternal(user, request);
     }
 
@@ -56,27 +66,42 @@ public class UserService {
     public UserResponseDTO updateProfileByEmail(String email, UpdateProfileRequest request) {
         log.info("Updating profile for user email: {}", email);
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> {
+                    log.error("User not found with email: {} during profile update", email);
+                    return new ResourceNotFoundException("User not found");
+                });
         return updateProfileInternal(user, request);
     }
 
     private UserResponseDTO updateProfileInternal(User user, UpdateProfileRequest request) {
-        if (request.getName() != null) user.setName(request.getName());
-        if (request.getMobileNumber() != null) user.setMobileNumber(request.getMobileNumber());
-        if (request.getDob() != null) user.setDob(request.getDob());
+        if (request.getName() != null) {
+            log.debug("Updating name for user {}: {} -> {}", user.getEmail(), user.getName(), request.getName());
+            user.setName(request.getName());
+        }
+        if (request.getMobileNumber() != null) {
+            log.debug("Updating mobile number for user {}: {} -> {}", user.getEmail(), user.getMobileNumber(), request.getMobileNumber());
+            user.setMobileNumber(request.getMobileNumber());
+        }
+        if (request.getDob() != null) {
+            log.debug("Updating DOB for user {}: {} -> {}", user.getEmail(), user.getDob(), request.getDob());
+            user.setDob(request.getDob());
+        }
         
         user.setUpdatedAt(LocalDateTime.now());
         User updatedUser = userRepository.save(user);
         log.info("Profile updated successfully for user: {}", updatedUser.getEmail());
-        return mapToResponse(updatedUser);
+        return userMapper.toResponse(updatedUser);
     }
 
     @Transactional
     public void changePassword(UUID userId, ChangePasswordRequest request) {
-        log.info("Changing password for user id: {}", userId);
+        log.info("Changing password for user ID: {}", userId);
         @SuppressWarnings("null")
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> {
+                    log.error("User not found with ID: {} during password change", userId);
+                    return new ResourceNotFoundException("User not found");
+                });
         changePasswordInternal(user, request);
     }
 
@@ -84,7 +109,10 @@ public class UserService {
     public void changePasswordByEmail(String email, ChangePasswordRequest request) {
         log.info("Changing password for user email: {}", email);
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> {
+                    log.error("User not found with email: {} during password change", email);
+                    return new ResourceNotFoundException("User not found");
+                });
         changePasswordInternal(user, request);
     }
 
@@ -98,21 +126,5 @@ public class UserService {
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
         log.info("Password changed successfully for user: {}", user.getEmail());
-    }
-
-    private UserResponseDTO mapToResponse(User user) {
-        return UserResponseDTO.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .name(user.getName())
-                .mobileNumber(user.getMobileNumber())
-                .roleName(user.getRole() != null ? user.getRole().getName() : null)
-                .tenantName(user.getTenantName())
-                .dob(user.getDob())
-                .status(user.getStatus())
-                .isActive(user.getIsActive())
-                .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
-                .build();
     }
 }

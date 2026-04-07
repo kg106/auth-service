@@ -4,6 +4,8 @@ import com.example.auth_service.dto.*;
 import com.example.auth_service.entity.Tenant;
 import com.example.auth_service.entity.User;
 import com.example.auth_service.exception.ResourceNotFoundException;
+import com.example.auth_service.mapper.TenantMapper;
+import com.example.auth_service.mapper.UserMapper;
 import com.example.auth_service.repository.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.domain.Specification;
@@ -21,81 +23,91 @@ public class SuperAdminService {
 
     private final UserRepository userRepository;
     private final TenantRepository tenantRepository;
+    private final UserMapper userMapper;
+    private final TenantMapper tenantMapper;
 
-    public SuperAdminService(UserRepository userRepository, TenantRepository tenantRepository) {
+    public SuperAdminService(UserRepository userRepository, TenantRepository tenantRepository, 
+                            UserMapper userMapper, TenantMapper tenantMapper) {
         this.userRepository = userRepository;
         this.tenantRepository = tenantRepository;
+        this.userMapper = userMapper;
+        this.tenantMapper = tenantMapper;
     }
 
     public List<UserResponseDTO> getAllUsers(UserFilterDTO filter) {
-        log.info("Super Admin: Fetching all users with filter: {}", filter);
+        log.info("Super Admin request: Fetching all users with filter: {}", filter);
         Specification<User> spec = UserSpecification.withFilter(filter);
-        return userRepository.findAll(spec).stream()
-                .map(this::mapToUserResponse)
+        List<User> users = userRepository.findAll(spec);
+        log.info("Super Admin: Found {} users", users.size());
+        return users.stream()
+                .map(userMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
     public List<TenantResponseDTO> getAllTenants(TenantFilterDTO filter) {
-        log.info("Super Admin: Fetching all tenants with filter: {}", filter);
+        log.info("Super Admin request: Fetching all tenants with filter: {}", filter);
         Specification<Tenant> spec = TenantSpecification.withFilter(filter);
-        return tenantRepository.findAll(spec).stream()
-                .map(this::mapToTenantResponse)
+        List<Tenant> tenants = tenantRepository.findAll(spec);
+        log.info("Super Admin: Found {} tenants", tenants.size());
+        return tenants.stream()
+                .map(tenantMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
     @Transactional
     public void updateUserStatus(UUID userId, String status, Boolean isActive) {
-        log.info("Super Admin: Updating status for user {}: status={}, isActive={}", userId, status, isActive);
-        @SuppressWarnings("null")
+        log.info("Super Admin request: Updating status for user {}: status={}, isActive={}", userId, status, isActive);
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+                .orElseThrow(() -> {
+                    log.error("Super Admin: User not found with ID: {}", userId);
+                    return new ResourceNotFoundException("User not found");
+                });
         
-        if (status != null) user.setStatus(status);
-        if (isActive != null) user.setIsActive(isActive);
-        user.setUpdatedAt(LocalDateTime.now());
-        userRepository.save(user);
+        boolean changed = false;
+        if (status != null && !status.equals(user.getStatus())) {
+            log.debug("Updating status for user {}: {} -> {}", user.getEmail(), user.getStatus(), status);
+            user.setStatus(status);
+            changed = true;
+        }
+        if (isActive != null && !isActive.equals(user.getIsActive())) {
+            log.debug("Updating isActive for user {}: {} -> {}", user.getEmail(), user.getIsActive(), isActive);
+            user.setIsActive(isActive);
+            changed = true;
+        }
+
+        if (changed) {
+            user.setUpdatedAt(LocalDateTime.now());
+            userRepository.save(user);
+            log.info("Super Admin: User {} status updated successfully", user.getEmail());
+        }
     }
 
     @Transactional
     public void updateTenantStatus(UUID tenantId, String status, Boolean isActive) {
-        log.info("Super Admin: Updating status for tenant {}: status={}, isActive={}", tenantId, status, isActive);
+        log.info("Super Admin request: Updating status for tenant {}: status={}, isActive={}", tenantId, status, isActive);
         @SuppressWarnings("null")
         Tenant tenant = tenantRepository.findById(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
+                .orElseThrow(() -> {
+                    log.error("Super Admin: Tenant not found with ID: {}", tenantId);
+                    return new ResourceNotFoundException("Tenant not found");
+                });
         
-        if (status != null) tenant.setStatus(status);
-        if (isActive != null) tenant.setIsActive(isActive);
-        tenant.setUpdatedAt(LocalDateTime.now());
-        tenantRepository.save(tenant);
-    }
+        boolean changed = false;
+        if (status != null && !status.equals(tenant.getStatus())) {
+            log.debug("Updating status for tenant {}: {} -> {}", tenant.getName(), tenant.getStatus(), status);
+            tenant.setStatus(status);
+            changed = true;
+        }
+        if (isActive != null && !isActive.equals(tenant.getIsActive())) {
+            log.debug("Updating isActive for tenant {}: {} -> {}", tenant.getName(), tenant.getIsActive(), isActive);
+            tenant.setIsActive(isActive);
+            changed = true;
+        }
 
-    private UserResponseDTO mapToUserResponse(User user) {
-        return UserResponseDTO.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .name(user.getName())
-                .mobileNumber(user.getMobileNumber())
-                .roleName(user.getRole() != null ? user.getRole().getName() : null)
-                .tenantName(user.getTenantName())
-                .dob(user.getDob())
-                .status(user.getStatus())
-                .isActive(user.getIsActive())
-                .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
-                .build();
-    }
-
-    private TenantResponseDTO mapToTenantResponse(Tenant tenant) {
-        return TenantResponseDTO.builder()
-                .id(tenant.getId())
-                .tenantIdStr(tenant.getTenantIdStr())
-                .name(tenant.getName())
-                .email(tenant.getEmail())
-                .plan(tenant.getPlan())
-                .status(tenant.getStatus())
-                .isActive(tenant.getIsActive())
-                .createdAt(tenant.getCreatedAt())
-                .updatedAt(tenant.getUpdatedAt())
-                .build();
+        if (changed) {
+            tenant.setUpdatedAt(LocalDateTime.now());
+            tenantRepository.save(tenant);
+            log.info("Super Admin: Tenant {} status updated successfully", tenant.getName());
+        }
     }
 }

@@ -3,7 +3,7 @@ package com.example.auth_service.controller;
 import com.example.auth_service.dto.UserFilterDTO;
 import com.example.auth_service.dto.UserResponseDTO;
 import com.example.auth_service.service.AdminService;
-import io.jsonwebtoken.Claims;
+import com.example.auth_service.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -23,11 +23,12 @@ import java.util.UUID;
 public class AdminController {
 
     private final AdminService adminService;
+    private final SecurityUtils securityUtils;
 
     @GetMapping("/users")
     @Operation(summary = "Get users in organization", description = "Returns a filtered list of users belonging to the admin's organization.")
     public ResponseEntity<List<UserResponseDTO>> getUsersInOrganization(UserFilterDTO filter, Authentication authentication) {
-        UUID tenantId = getTenantIdFromAuth(authentication);
+        UUID tenantId = securityUtils.getTenantIdFromAuth(authentication);
         return ResponseEntity.ok(adminService.getUsersInTenant(tenantId, filter));
     }
 
@@ -38,17 +39,8 @@ public class AdminController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Boolean isActive,
             Authentication authentication) {
-        UUID tenantId = getTenantIdFromAuth(authentication);
+        UUID tenantId = securityUtils.getTenantIdFromAuth(authentication);
         adminService.updateUserStatusInTenant(tenantId, userId, status, isActive);
         return ResponseEntity.ok("User status updated successfully");
-    }
-
-    private UUID getTenantIdFromAuth(Authentication authentication) {
-        Claims claims = (Claims) authentication.getDetails();
-        String tenantIdStr = claims.get("tenantId", String.class);
-        if (tenantIdStr == null) {
-            throw new RuntimeException("Tenant ID not found in token");
-        }
-        return UUID.fromString(tenantIdStr);
     }
 }
